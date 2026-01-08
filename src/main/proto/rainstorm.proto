@@ -1,0 +1,127 @@
+syntax = "proto3";
+
+package rainstorm;
+import "google/protobuf/timestamp.proto";
+
+enum Stage {
+  SOURCE = 0;
+  FIRST = 1;
+  SECOND = 2;
+  THIRD = 3;
+}
+
+enum Type {
+  PING = 0;
+  ACK = 1;
+  TUPLE = 2;
+  TASK_METADATA = 3;
+  EOF = 4;
+  EOF_ACK = 5;
+  STOP = 6;
+}
+
+message Message {
+  Type type = 1;
+  Tuple tuple = 2;
+  string taskId = 3;
+  Metadata metadata = 4;
+  repeated Task tasks = 5;
+}
+
+message TaskAck {
+  string taskId = 1;
+}
+
+message Task {
+  int32 port = 1;
+  string ip = 2;
+  Stage stage = 3;
+  string op_exe = 4;
+  string sourceFile = 5;
+  string id = 6;
+  int64 pid = 7;         // OS process ID 
+  string logFile = 8;
+  int32 taskIndex = 9;
+  string op_args = 10;
+  string add_op_args = 11;
+  string destinationFile = 12;
+  int64 inputRate = 13;
+}
+
+message TaskListRequest {}
+
+message StopAllTasks {}
+
+message TaskList {
+  repeated Task entries = 1;
+}
+
+message Metadata {
+  Task myTask = 1;
+  repeated Task nextTasks = 2;
+}
+
+message Tuple {
+  string id = 1;
+  string key = 2;
+  string value = 3;
+  string senderTaskId = 4;
+}
+
+message ControlMessage {
+  oneof msg {
+    ControlPayload payload = 1;
+    StopTask stop = 2;
+    LoadReport load = 3;
+    TaskAck ack = 4;
+    FailureReport fail = 5;
+    TaskListRequest listReq = 6;
+    TaskList taskList = 7;
+    KillTask killTask = 8;
+    TaskEnded ended = 9;
+    StopAllTasks stopAllTasks = 10;
+  }
+}
+
+message ControlPayload {
+  repeated Metadata metadata = 1;
+  bool autoscale = 2;
+  Type type = 3;
+  repeated Task allTasks = 4;
+}
+
+message TaskEnded {
+  int32 stage = 1;
+  string taskId = 2;
+  string vmIp = 3;
+}
+message StopTask {
+  string taskId = 1;
+}
+
+message KillTask {
+  int32 pid = 1;
+}
+
+message LoadReport {
+  int32 stage = 1;
+  int32 taskIndex = 2;
+  double rate = 3;
+  string vmIp = 4;
+  string taskId = 5;
+}
+
+message FailureReport {
+  string taskId = 1;
+  int32 stage = 2;
+}
+
+message OP {
+  string key = 1;
+  string value = 2;
+}
+
+message FileOpMessage {
+  string type = 1;
+  bytes fileData = 2;
+}
